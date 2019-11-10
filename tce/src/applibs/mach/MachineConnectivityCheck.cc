@@ -1333,7 +1333,9 @@ MachineConnectivityCheck::hasConditionalMoves(
     const Machine::RegisterFileNavigator regNav =
         mach.registerFileNavigator();
 
-    std::set<std::pair<RegisterFile*,int> > allGuardRegs;
+    std::set<std::pair<const RegisterFile*,int> > allGuardRegs = 
+	MachineInfo::getAllGuardRegisters(mach);
+	    /*;
     const Machine::BusNavigator& busNav = mach.busNavigator();
 
     // first just collect all guard registers.
@@ -1349,15 +1351,15 @@ MachineConnectivityCheck::hasConditionalMoves(
                                                  rg->registerIndex()));
             }
         }
-    }
+    }*/
 
 
     // then check for the connections.
     for (int i = 0; i < regNav.count(); i++) {
         TTAMachine::RegisterFile* srf = regNav.item(i);
         for (int j = 0; j < regNav.count(); j++) {
-            TTAMachine::RegisterFile* drf = regNav.item(i);
-            for (std::set<std::pair<RegisterFile*,int> >::iterator k =
+            TTAMachine::RegisterFile* drf = regNav.item(j);
+            for (std::set<std::pair<const RegisterFile*,int> >::iterator k =
                      allGuardRegs.begin(); k != allGuardRegs.end(); k++) {
                 if (!isConnectedWithBothGuards(*srf, *drf, *k)) {
                     return false;
@@ -1389,7 +1391,7 @@ bool
 MachineConnectivityCheck::isConnectedWithBothGuards(
     const TTAMachine::BaseRegisterFile& sourceRF,
     const TTAMachine::BaseRegisterFile& destRF,
-    std::pair<RegisterFile*,int> guardReg) {
+    std::pair<const RegisterFile*,int> guardReg) {
     
     RfRfBoolMap::const_iterator
         i = rfRfCache_.find(RfRfPair(&sourceRF, &destRF));
@@ -1426,7 +1428,7 @@ MachineConnectivityCheck::isConnectedWithBothGuards(
 }
 
 std::pair<bool,bool> MachineConnectivityCheck::hasBothGuards(
-    const TTAMachine::Bus* bus, std::pair<RegisterFile*,int> guardReg) {
+    const TTAMachine::Bus* bus, std::pair<const RegisterFile*,int> guardReg) {
     bool trueOK = false;
     bool falseOK = false;
 

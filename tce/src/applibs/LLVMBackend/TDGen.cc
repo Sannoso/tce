@@ -42,6 +42,7 @@
 #include "HWOperation.hh"
 #include "FUPort.hh"
 #include "Conversion.hh"
+#include "MachineInfo.hh"
 #include "MachineConnectivityCheck.hh"
 #include "Bus.hh"
 #include "Guard.hh"
@@ -1929,9 +1930,9 @@ TDGen::writeOperationDef(
     // predicate and the immediate transfer capability. Disable
     // generating the predicated versions for immediate operand
     // patterns for now.
-    bool canBePredicated = operandTypes.find('i') == std::string::npos;
+    bool predicatesPossible = canBePredicated(op, operandTypes);//operandTypes.find('i') == std::string::npos;
 
-    if (canBePredicated) {
+    if (predicatesPossible) {
         // write predicated versions
         o << "def PRED_TRUE_" << opcEnum << " : "
           << "InstTCE<"
@@ -1956,7 +1957,7 @@ TDGen::writeOperationDef(
     }        
     opNames_[opcEnum] = backendPrefix + op.name();
 
-    if (canBePredicated) {
+    if (predicatesPossible) {
         opNames_["PRED_TRUE_" + opcEnum] = "?" + backendPrefix + op.name();
         opNames_["PRED_FALSE_" + opcEnum] = "!" + backendPrefix + op.name();
         truePredOps_[opcEnum] = "PRED_TRUE_" + opcEnum;
@@ -3808,6 +3809,76 @@ void TDGen::createSelectPatterns(std::ostream& os) {
     }
 }
 
+//add doxygen info here
+bool
+TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
+    if(operandTypes.find('i') != std::string::npos) {
+//	for now exclude immediate operations.
+//	TODO: check immediate connections
+	return false;
+    } else {
+	std::set<std::pair<const TTAMachine::RegisterFile*, int>> allGuards = MachineInfo::getAllGuardRegisters(mach_);
+	//get FUs that have this operation
+	//question: need to take operandtypes into account or not?
+	std::set<const TTAMachine::FunctionUnit*> fuSet = MachineInfo::getFUsFromOperation(mach_, op);
+
+// 	check if we have one or more FUs in our set.
+	if(fuSet.size() != 0) {
+	    int counter = 0;
+	    std::cout << "DEBUG PREDICATES amount of function units that support "
+		<< op.name() << operandTypes << " is: " << fuSet.size() << std::endl;
+	    for(auto it=fuSet.begin(); it != fuSet.end(); ++it) {
+		bool possibleFu = true;
+		const TTAMachine::FunctionUnit* fu = *it;
+		std::cout << fu->operationPortCount() << std::endl;
+		for(int i =0; i != fu->operationPortCount(); i++) {
+	//DATA TO COLLECT TO CHECK CONNECTION:
+	//GuardRegister connection
+	//Guard connection
+		    if(fu->port(i)->isInput() ) {
+		        //check connection from guard. if not possibleFu = false and break
+			//check all Guards. need connection with just the one?
+			//bool connectedToGuard = false;
+			//for(guard : allguards) {
+//			    if(MachineConnectivityCheck::isConnected(guard, fu->port(i))) {
+//			        connectedToGuard = true;
+//			        break;
+//			    }
+//			    
+//			}
+//			if(connectedToGuard == false) {
+//			    return false;
+//			}
+		    } else if(fu->port(i)->isOutput()) {
+			//check connection TO rf with guard if not possibleFu = false and break;
+			//bool connectedToGuard = false;
+			//for(guard : allguards) {
+			//    if(MachineConnectivityCheck::isConnected(fu->port(i), guard)) {
+			//        connectedToGuard = true;
+			//        break;
+			//    }
+			//}
+			//if(connectedToGuard = false) {
+			//    return false;
+			//}
+		     } else {
+			std::cout << "found a port that is neither an inpot nor an output port."
+				<< std::endl;
+			//not possible so put an assert?
+		    }
+		}
+
+//	check if all inputports of this FU have connection FROM rf with guard AND check if all outputports of this FU have connection TO rf with guard. THEN trueForOne = true
+	    }
+	    return true;
+	} else { //operation not supported apperently.
+	//is this possible or should there be an assert here?
+	    return false;
+	}
+    }
+    //
+}
+
 void TDGen::writeCallSeqStart(std::ostream& os) {
 
 #ifdef LLVM_OLDER_THAN_5_0
@@ -3822,8 +3893,7 @@ void TDGen::writeCallSeqStart(std::ostream& os) {
      << "\"# ADJCALLSTACKDOWN $amt\","
      << "[(callseq_start timm:$amt)]>;}" << std::endl << std::endl;
 
-#else
-
+#else 
   os << "def SDT_TCECallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32>,"
      << "SDTCisVT<1, i32> ]>;" << std::endl << std::endl
      << "def callseq_start : SDNode<\"ISD::CALLSEQ_START\", "

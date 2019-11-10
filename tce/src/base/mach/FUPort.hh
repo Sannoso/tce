@@ -41,7 +41,7 @@
 namespace TTAMachine {
 
 /**
- * Represens an operand, trigger or result port of a function unit.
+ * Represents an operand, trigger or result port of a function unit.
  */
 class FUPort : public BaseFUPort {
 public:

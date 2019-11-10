@@ -180,4 +180,5 @@ tce/doc/man/TCE/algorithm.sty
 tce/doc/man/TCE/algorithmic.sty
 tce/doc/man/TCE/tce.cls
 tce/doc/man/TCE/tcedocs.cls
+tce/src/procgen/MachInfo/machinfo
 

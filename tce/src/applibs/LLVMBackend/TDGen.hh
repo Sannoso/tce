@@ -253,6 +253,7 @@ protected:
     void writeCallingConvLicenceText(std::ostream& os);
 
     void createSelectPatterns(std::ostream& os);
+    bool canBePredicated(Operation& op, const std::string& OperandTypes);
 
     void createByteExtLoadPatterns(std::ostream& os);
     void createShortExtLoadPatterns(std::ostream& os);

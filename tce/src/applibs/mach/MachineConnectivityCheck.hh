@@ -83,7 +83,7 @@ public:
     static bool isConnectedWithBothGuards(
         const TTAMachine::BaseRegisterFile& sourceRF,
         const TTAMachine::BaseRegisterFile& destRF,
-        std::pair<TTAMachine::RegisterFile*,int> guardReg);
+        std::pair<const TTAMachine::RegisterFile*,int> guardReg);
 
     static bool isConnected(
         const TTAMachine::Port& sourcePort,
@@ -201,7 +201,7 @@ public:
 
     static std::pair<bool,bool> hasBothGuards(
         const TTAMachine::Bus* bus, 
-        std::pair<TTAMachine::RegisterFile*,int> guardReg);
+        std::pair<const TTAMachine::RegisterFile*,int> guardReg);
 
 protected:
     MachineConnectivityCheck(const std::string& shortDesc_);
