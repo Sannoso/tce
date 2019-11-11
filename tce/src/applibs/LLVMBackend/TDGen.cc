@@ -3832,35 +3832,40 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
 		const TTAMachine::FunctionUnit* fu = *it;
 		std::cout << fu->operationPortCount() << std::endl;
 		for(int i =0; i != fu->operationPortCount(); i++) {
-	//DATA TO COLLECT TO CHECK CONNECTION:
-	//GuardRegister connection
-	//Guard connection
+	//sander TODO refactor: for loops out of the if and if else into this for loop
+	//doing almost the same loop in both cases
 		    if(fu->port(i)->isInput() ) {
-		        //check connection from guard. if not possibleFu = false and break
-			//check all Guards. need connection with just the one?
-			//bool connectedToGuard = false;
-			//for(guard : allguards) {
-//			    if(MachineConnectivityCheck::isConnected(guard, fu->port(i))) {
-//			        connectedToGuard = true;
-//			        break;
-//			    }
-//			    
-//			}
-//			if(connectedToGuard == false) {
-//			    return false;
-//			}
+			bool connectedToGuard = false;
+			for(auto jt = allGuards.begin(); jt != allGuards.end(); ++jt) {
+			    const TTAMachine::RegisterFile* guardRF = std::get<0>(*jt);
+			    //check which port is outputport
+			    for(int k = 0; k != guardRF->portCount(); k++) {
+				    const TTAMachine::Port* destPort = dynamic_cast<const TTAMachine::Port*>(fu->port(i));
+			        if(guardRF->port(k)->isOutput() &&
+				    MachineConnectivityCheck::isConnected(*guardRF , *fu->port(i))) {
+				    connectedToGuard = true;
+				    break;
+			        }
+			    }
+			}
+			if(!connectedToGuard) {
+			    return false;
+			}
 		    } else if(fu->port(i)->isOutput()) {
-			//check connection TO rf with guard if not possibleFu = false and break;
-			//bool connectedToGuard = false;
-			//for(guard : allguards) {
-			//    if(MachineConnectivityCheck::isConnected(fu->port(i), guard)) {
-			//        connectedToGuard = true;
-			//        break;
-			//    }
-			//}
-			//if(connectedToGuard = false) {
-			//    return false;
-			//}
+			bool connectedToGuard = false;
+			for(auto jt = allGuards.begin(); jt != allGuards.end(); ++jt) {
+			    const TTAMachine::RegisterFile* guardRF = std::get<0>(*jt);
+			    for(int k = 0; k != guardRF->portCount(); k++) {
+				if(guardRF->port(k)->isInput() &&
+					MachineConnectivityCheck::isConnected(*fu->port(i), *guardRF)) {
+				    connectedToGuard = true;
+				    break;
+				}
+			    }
+			}
+			if(!connectedToGuard) {
+			    return false;	
+			}
 		     } else {
 			std::cout << "found a port that is neither an inpot nor an output port."
 				<< std::endl;
