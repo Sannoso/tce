@@ -60,6 +60,7 @@
 #include "LLVMBackend.hh" // llvmRequiredOps..
 #include "MathTools.hh"
 #include "tce_config.h"
+#include "BaseFUPort.hh"
 // SP, RES, KLUDGE, 2 GPRs?
 unsigned const TDGen::REQUIRED_I32_REGS = 5;
 
@@ -3812,76 +3813,105 @@ void TDGen::createSelectPatterns(std::ostream& os) {
 //add doxygen info here
 bool
 TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
-    if(operandTypes.find('i') != std::string::npos) {
-//	for now exclude immediate operations.
-//	TODO: check immediate connections
+	//BUS navigators, RF navigators and Imm navigators in Machine class
+//find all function units that have this operation?
+    std::set<const TTAMachine::FunctionUnit*> fuSet = 
+	MachineInfo::getFUsFromOperation(mach_, op);
+    if(fuSet.size() == 0) {
 	return false;
-    } else {
-	std::set<std::pair<const TTAMachine::RegisterFile*, int>> allGuards = MachineInfo::getAllGuardRegisters(mach_);
-	//get FUs that have this operation
-	//question: need to take operandtypes into account or not?
-	std::set<const TTAMachine::FunctionUnit*> fuSet = MachineInfo::getFUsFromOperation(mach_, op);
+	//or should we put an assert here?
+    }
 
-// 	check if we have one or more FUs in our set.
-	if(fuSet.size() != 0) {
-	    int counter = 0;
-	    std::cout << "DEBUG PREDICATES amount of function units that support "
-		<< op.name() << operandTypes << " is: " << fuSet.size() << std::endl;
-	    for(auto it=fuSet.begin(); it != fuSet.end(); ++it) {
-		bool possibleFu = true;
-		const TTAMachine::FunctionUnit* fu = *it;
-		std::cout << fu->operationPortCount() << std::endl;
-		for(int i =0; i != fu->operationPortCount(); i++) {
-	//sander TODO refactor: for loops out of the if and if else into this for loop
-	//doing almost the same loop in both cases
-		    if(fu->port(i)->isInput() ) {
-			bool connectedToGuard = false;
-			for(auto jt = allGuards.begin(); jt != allGuards.end(); ++jt) {
-			    const TTAMachine::RegisterFile* guardRF = std::get<0>(*jt);
-			    //check which port is outputport
-			    for(int k = 0; k != guardRF->portCount(); k++) {
-				    const TTAMachine::Port* destPort = dynamic_cast<const TTAMachine::Port*>(fu->port(i));
-			        if(guardRF->port(k)->isOutput() &&
-				    MachineConnectivityCheck::isConnected(*guardRF , *fu->port(i))) {
-				    connectedToGuard = true;
-				    break;
-			        }
-			    }
-			}
-			if(!connectedToGuard) {
-			    return false;
-			}
-		    } else if(fu->port(i)->isOutput()) {
-			bool connectedToGuard = false;
-			for(auto jt = allGuards.begin(); jt != allGuards.end(); ++jt) {
-			    const TTAMachine::RegisterFile* guardRF = std::get<0>(*jt);
-			    for(int k = 0; k != guardRF->portCount(); k++) {
-				if(guardRF->port(k)->isInput() &&
-					MachineConnectivityCheck::isConnected(*fu->port(i), *guardRF)) {
-				    connectedToGuard = true;
-				    break;
-				}
-			    }
-			}
-			if(!connectedToGuard) {
-			    return false;	
-			}
-		     } else {
-			std::cout << "found a port that is neither an inpot nor an output port."
-				<< std::endl;
-			//not possible so put an assert?
-		    }
+    std::set<std::pair<const TTAMachine::RegisterFile*, int> > allGuards = 
+	MachineInfo::getAllGuardRegisters(mach_);
+
+    for(auto fu : fuSet) {
+	for(int i = 1; i < op.operandCount(); i++) {
+	    Operand operand = op.operand(i);
+	    //Heikki is this the correct way of iterating over operands?
+	    if(operand.isInput()) {
+		//maybe write a function for this operand = immediate thing
+		//because this is duplicated code
+		char operandType = //copied this line from somewhere but have some doubt about it.
+		    operandTypes[operand.index()-1 + op.numberOfOutputs()];
+		bool imm =  (operandType == 'i' || operandType == 'j');
+		if(imm) { //2 chances. 
+			//1) connected with guarded bus with 32bits short imm
+		    	//2) connected with 32bits imm unit over a guarded bus.
+
+		    //get BusNavigor
+		    //loop over busses
+		    //  if bus is connected to this operandPort
+		    //    && bus has guards
+		    //    && bus has 32bit width imm
+		    //          
+		    //    operand is good.
+		    //    break; //from busnavigator loop
+		    //  else //nothing, just iterate over next bus.
+		    //if(!operandIsGood) { //also chance it has connection to IMM unit
+		    //  get immediateunitnavigator
+		    //  loop over immunits
+		    //    if(isConnected(immUnit, operandPort, allGuards)) {
+		    //      operand is good;
+		    //      break; //from immnavigator loop
+		    //    }
+		    //}
+		    //if(!operand is good) {
+		    //  FU no good;
+		    //  break; //from operand loop and check next FU
+		    //}
+
+		    //original pseudocode
+		    //check for guarded bus with full-width(32b)short imm connected to this port
+		    //OR guarded connection FROM an IMM unit to the port
+		    //if not
+		    //  FU no good;
+		} else {
+		    //get registerFileNavigator
+		    //loop over all RFs:
+		    //  if(isConnectedWithGuards(RF, operandPort, allGuars)) {
+		    //    operand is good.
+		    //    break;
+		    //  }
+		    //if(!operandIsGood) {
+		    //  FU no good;
+		    //  break; //from operand loop
+		    //}
+		    //
+		    // sander REMINDER check WIDTHs of buses and ports and operands and all. how does this work?
 		}
 
-//	check if all inputports of this FU have connection FROM rf with guard AND check if all outputports of this FU have connection TO rf with guard. THEN trueForOne = true
+
+		    //original pseudocode
+		    //if operand = imm
+		    //  check for guarded bus with full-width(32b)short imm connected to this port
+		    //  OR guarded connection FROM an IMM unit to the port
+		    //else (operand!=imm)
+		    //  check connection from any registerfile with same or more width and with guards
+		    //    if not break;
+	    } else { //operand is output
+		//get registerFileNavigator.
+		//loop over all RFs
+		//  if(isConnectedWithGuards(operand.port, RF,allGuards)) {
+		//    operand is good.
+		//    break;
+		//  }
+		//if(!operandIsGood) {
+		//  FU no good;
+		//  break; //break out of operandloop and try next FU
+		//} //else do nothing and iterate over next operand.
+		//
+		//
+		//highlevel pseudocode
+		//check connection to any registerfile with same or more width and with guards
+		//  if not break;
+		//  sander REMINDER. check WIDTHs op buses and ports and operands and all. how does this work.
 	    }
-	    return true;
-	} else { //operation not supported apperently.
-	//is this possible or should there be an assert here?
-	    return false;
 	}
+	//if(FUgood) { //we found an FU that can perform predicated operation for us.
+	//  return true; //true can be predicated
+	//} //else do nothing and iterate over next FU
     }
-    //
 }
 
 void TDGen::writeCallSeqStart(std::ostream& os) {

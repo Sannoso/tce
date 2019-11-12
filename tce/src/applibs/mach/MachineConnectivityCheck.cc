@@ -1325,7 +1325,6 @@ MachineConnectivityCheck::RfRfBoolMap MachineConnectivityCheck::rfRfCache_;
 MachineConnectivityCheck::RfPortBoolMap MachineConnectivityCheck::rfPortCache_;
 MachineConnectivityCheck::PortRfBoolMap MachineConnectivityCheck::portRfCache_;
 
-
 bool
 MachineConnectivityCheck::hasConditionalMoves(
     const TTAMachine::Machine& mach) {
@@ -1370,12 +1369,37 @@ MachineConnectivityCheck::hasConditionalMoves(
     return true;
 }
 /*
+ * I think we can remove this, we do a better job now in TDGen.cc
+ * in the canBePredicated() function
 bool
 MachineConnectivityCheck::hasConditionalOperations(
     const TTAMachine::Machine& mach) {
 
 }
 */
+
+//doxygen here
+bool
+MachineConnectivityCheck::isConnectedWithGuards(
+    const TTAMachine::BaseRegisterFile& sourceRF,
+    const TTAMachine::Port& destport,
+    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg) {
+
+    //todo implement logic here
+    return false;
+}
+
+//doxygen here
+bool
+MachineConnectivityCheck::isConnectedWithGuards(
+    const TTAMachine::Port& sourcePort,
+    const TTAMachine::BaseRegisterFile& destRF,
+    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg) {
+
+    //todo implement logic here
+    return false;
+}
+
 
 /**
  * Checks whether there is a connection from some outport port of a 

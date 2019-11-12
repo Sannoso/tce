@@ -80,6 +80,16 @@ public:
         const TTAMachine::BaseRegisterFile& destRF,
         TTAMachine::Guard* guard = NULL);
 
+    static bool isConnectedWithGuards(
+        const TTAMachine::BaseRegisterFile& sourceRF,
+        const TTAMachine::Port& destPort,
+        std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg);
+
+    static bool isConnectedWithGuards(
+        const TTAMachine::Port& sourcePort,
+        const TTAMachine::BaseRegisterFile& destRF,
+        std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg);
+
     static bool isConnectedWithBothGuards(
         const TTAMachine::BaseRegisterFile& sourceRF,
         const TTAMachine::BaseRegisterFile& destRF,
