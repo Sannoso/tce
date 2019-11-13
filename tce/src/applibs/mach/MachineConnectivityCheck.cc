@@ -1383,9 +1383,28 @@ bool
 MachineConnectivityCheck::isConnectedWithGuards(
     const TTAMachine::BaseRegisterFile& sourceRF,
     const TTAMachine::Port& destport,
-    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg) {
+    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardRegs) {
 
-    //todo implement logic here
+// question. only one outputport of the RF need to be connected to the destport
+// with all guards, right?
+//
+//bool connection = true; //assume true and check if otherwise. 
+//
+//for( outputPort : sourceRF) {
+//  connection = true; //assume true for every port.
+//  if(isConnected(outputPort, destPort)) {
+//    for(guardReg: guardRegs) {
+//      if(!isConnected(outputPort,destPort, guardReg) {
+//        connection = false;
+//        break;
+//      }
+//    }
+//    if(connection == true) {
+//      break; //we found a connection with all guards
+//    }
+//  }
+//}
+//return connection;
     return false;
 }
 
@@ -1394,9 +1413,26 @@ bool
 MachineConnectivityCheck::isConnectedWithGuards(
     const TTAMachine::Port& sourcePort,
     const TTAMachine::BaseRegisterFile& destRF,
-    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg) {
+    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardRegs) {
 
-    //todo implement logic here
+//question. only one inputport of RF has to be connected with all guards, right?
+//
+//bool connection = true;
+//for(rfInputPort : destRF.inputports() ) {
+//  connection = true; //assume connection is true and check to disprove this.
+//  if(isConnected(sourcePort, rfInputPort)) {
+//    for(guardReg : guardRegs) {
+//      if(!isConnected(sourcePort, rfInputPort, guardReg) {
+//        connection = false;
+//        break;
+//      }
+//    }
+//    if(connection == true) { //we found a connection with all guards.
+//      break;
+//    }
+//  }
+//}
+//return connection;
     return false;
 }
 
