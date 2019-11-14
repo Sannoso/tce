@@ -33,11 +33,11 @@
 #ifndef TTA_MACHINE_INFO_HH
 #define TTA_MACHINE_INFO_HH
 
-#include "OperationDAGSelector.hh"
-#include "InstructionTemplate.hh"
-#include "RegisterFile.hh"
-
 #include <set>
+
+#include "InstructionTemplate.hh"
+#include "OperationDAGSelector.hh"
+#include "RegisterFile.hh"
 
 namespace TTAMachine {
     class AddressSpace;
@@ -56,10 +56,10 @@ public:
         const TTAMachine::Machine& mach);
     static bool supportsOperation(
         const TTAMachine::Machine& mach, const TCEString operation);
-    static std::set<std::pair<const TTAMachine::RegisterFile*, int> > getAllGuardRegisters(
-        const TTAMachine::Machine& mach);
+    static std::set<std::pair<const TTAMachine::RegisterFile*, int> >
+    getAllGuardRegisters(const TTAMachine::Machine& mach);
     static std::set<const TTAMachine::FunctionUnit*> getFUsFromOperation(
-	const TTAMachine::Machine& mach, const Operation& op);
+        const TTAMachine::Machine& mach, const Operation& op);
     static TTAMachine::AddressSpace* defaultDataAddressSpace(
         const TTAMachine::Machine& mach);
     static int longestGuardLatency(

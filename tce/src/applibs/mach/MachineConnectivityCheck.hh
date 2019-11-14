@@ -83,17 +83,17 @@ public:
     static bool isConnectedWithGuards(
         const TTAMachine::BaseRegisterFile& sourceRF,
         const TTAMachine::Port& destPort,
-        std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg);
+        std::set<std::pair<const TTAMachine::RegisterFile*, int> > guardReg);
 
     static bool isConnectedWithGuards(
         const TTAMachine::Port& sourcePort,
         const TTAMachine::BaseRegisterFile& destRF,
-        std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardReg);
+        std::set<std::pair<const TTAMachine::RegisterFile*, int> > guardReg);
 
     static bool isConnectedWithBothGuards(
         const TTAMachine::BaseRegisterFile& sourceRF,
         const TTAMachine::BaseRegisterFile& destRF,
-        std::pair<const TTAMachine::RegisterFile*,int> guardReg);
+        std::pair<const TTAMachine::RegisterFile*, int> guardReg);
 
     static bool isConnected(
         const TTAMachine::Port& sourcePort,
@@ -209,9 +209,9 @@ public:
     static void addAnnotatedFUs(std::set<TCEString>& candidateFUs, const TTAProgram::Move& m, 
 	TTAProgram::ProgramAnnotation::Id id);
 
-    static std::pair<bool,bool> hasBothGuards(
-        const TTAMachine::Bus* bus, 
-        std::pair<const TTAMachine::RegisterFile*,int> guardReg);
+    static std::pair<bool, bool> hasBothGuards(
+        const TTAMachine::Bus* bus,
+        std::pair<const TTAMachine::RegisterFile*, int> guardReg);
 
 protected:
     MachineConnectivityCheck(const std::string& shortDesc_);

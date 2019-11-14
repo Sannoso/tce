@@ -1332,34 +1332,34 @@ MachineConnectivityCheck::hasConditionalMoves(
     const Machine::RegisterFileNavigator regNav =
         mach.registerFileNavigator();
 
-    std::set<std::pair<const RegisterFile*,int> > allGuardRegs = 
-	MachineInfo::getAllGuardRegisters(mach);
-	    /*;
-    const Machine::BusNavigator& busNav = mach.busNavigator();
+    std::set<std::pair<const RegisterFile*, int> > allGuardRegs =
+        MachineInfo::getAllGuardRegisters(mach);
+    /*;
+const Machine::BusNavigator& busNav = mach.busNavigator();
 
-    // first just collect all guard registers.
-    for (int bi = 0; bi < busNav.count(); ++bi) {
-        Bus* bus = busNav.item(bi);
-        for (int gi = 0; gi < bus->guardCount(); gi++) {
-            Guard* guard = bus->guard(gi);
-            TTAMachine::RegisterGuard* rg = 
-                dynamic_cast<RegisterGuard*>(guard);
-            if (rg != NULL) {
-                allGuardRegs.insert(
-                    std::pair<RegisterFile*,int>(rg->registerFile(),
-                                                 rg->registerIndex()));
-            }
-        }
-    }*/
-
+// first just collect all guard registers.
+for (int bi = 0; bi < busNav.count(); ++bi) {
+Bus* bus = busNav.item(bi);
+for (int gi = 0; gi < bus->guardCount(); gi++) {
+    Guard* guard = bus->guard(gi);
+    TTAMachine::RegisterGuard* rg =
+        dynamic_cast<RegisterGuard*>(guard);
+    if (rg != NULL) {
+        allGuardRegs.insert(
+            std::pair<RegisterFile*,int>(rg->registerFile(),
+                                         rg->registerIndex()));
+    }
+}
+}*/
 
     // then check for the connections.
     for (int i = 0; i < regNav.count(); i++) {
         TTAMachine::RegisterFile* srf = regNav.item(i);
         for (int j = 0; j < regNav.count(); j++) {
             TTAMachine::RegisterFile* drf = regNav.item(j);
-            for (std::set<std::pair<const RegisterFile*,int> >::iterator k =
-                     allGuardRegs.begin(); k != allGuardRegs.end(); k++) {
+            for (std::set<std::pair<const RegisterFile*, int> >::iterator k =
+                     allGuardRegs.begin();
+                 k != allGuardRegs.end(); k++) {
                 if (!isConnectedWithBothGuards(*srf, *drf, *k)) {
                     return false;
                 }
@@ -1378,64 +1378,62 @@ MachineConnectivityCheck::hasConditionalOperations(
 }
 */
 
-//doxygen here
+// doxygen here
 bool
 MachineConnectivityCheck::isConnectedWithGuards(
     const TTAMachine::BaseRegisterFile& sourceRF,
     const TTAMachine::Port& destport,
-    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardRegs) {
-
-// question. only one outputport of the RF need to be connected to the destport
-// with all guards, right?
-//
-//bool connection = true; //assume true and check if otherwise. 
-//
-//for( outputPort : sourceRF) {
-//  connection = true; //assume true for every port.
-//  if(isConnected(outputPort, destPort)) {
-//    for(guardReg: guardRegs) {
-//      if(!isConnected(outputPort,destPort, guardReg) {
-//        connection = false;
-//        break;
-//      }
-//    }
-//    if(connection == true) {
-//      break; //we found a connection with all guards
-//    }
-//  }
-//}
-//return connection;
+    std::set<std::pair<const TTAMachine::RegisterFile*, int> > guardRegs) {
+    // question. only one outputport of the RF need to be connected to the
+    // destport with all guards, right?
+    //
+    // bool connection = true; //assume true and check if otherwise.
+    //
+    // for( outputPort : sourceRF) {
+    //  connection = true; //assume true for every port.
+    //  if(isConnected(outputPort, destPort)) {
+    //    for(guardReg: guardRegs) {
+    //      if(!isConnected(outputPort,destPort, guardReg) {
+    //        connection = false;
+    //        break;
+    //      }
+    //    }
+    //    if(connection == true) {
+    //      break; //we found a connection with all guards
+    //    }
+    //  }
+    //}
+    // return connection;
     return false;
 }
 
-//doxygen here
+// doxygen here
 bool
 MachineConnectivityCheck::isConnectedWithGuards(
     const TTAMachine::Port& sourcePort,
     const TTAMachine::BaseRegisterFile& destRF,
-    std::set<std::pair<const TTAMachine::RegisterFile*,int> > guardRegs) {
-
-//question. only one inputport of RF has to be connected with all guards, right?
-//
-//bool connection = true;
-//for(rfInputPort : destRF.inputports() ) {
-//  connection = true; //assume connection is true and check to disprove this.
-//  if(isConnected(sourcePort, rfInputPort)) {
-//    for(guardReg : guardRegs) {
-//      if(!isConnected(sourcePort, rfInputPort, guardReg) {
-//        connection = false;
-//        break;
-//      }
-//    }
-//    if(connection == true) { //we found a connection with all guards.
-//      break;
-//    }
-//  }
-//}
-//return connection;
+    std::set<std::pair<const TTAMachine::RegisterFile*, int> > guardRegs) {
+    // question. only one inputport of RF has to be connected with all guards,
+    // right?
+    //
+    // bool connection = true;
+    // for(rfInputPort : destRF.inputports() ) {
+    //  connection = true; //assume connection is true and check to disprove
+    //  this. if(isConnected(sourcePort, rfInputPort)) {
+    //    for(guardReg : guardRegs) {
+    //      if(!isConnected(sourcePort, rfInputPort, guardReg) {
+    //        connection = false;
+    //        break;
+    //      }
+    //    }
+    //    if(connection == true) { //we found a connection with all guards.
+    //      break;
+    //    }
+    //  }
+    //}
+    // return connection;
     return false;
 }
-
 
 /**
  * Checks whether there is a connection from some outport port of a 
@@ -1451,8 +1449,7 @@ bool
 MachineConnectivityCheck::isConnectedWithBothGuards(
     const TTAMachine::BaseRegisterFile& sourceRF,
     const TTAMachine::BaseRegisterFile& destRF,
-    std::pair<const RegisterFile*,int> guardReg) {
-    
+    std::pair<const RegisterFile*, int> guardReg) {
     RfRfBoolMap::const_iterator
         i = rfRfCache_.find(RfRfPair(&sourceRF, &destRF));
     if (i != rfRfCache_.end()) {
@@ -1487,8 +1484,9 @@ MachineConnectivityCheck::isConnectedWithBothGuards(
     return false;
 }
 
-std::pair<bool,bool> MachineConnectivityCheck::hasBothGuards(
-    const TTAMachine::Bus* bus, std::pair<const RegisterFile*,int> guardReg) {
+std::pair<bool, bool>
+MachineConnectivityCheck::hasBothGuards(
+    const TTAMachine::Bus* bus, std::pair<const RegisterFile*, int> guardReg) {
     bool trueOK = false;
     bool falseOK = false;
 

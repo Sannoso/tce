@@ -220,10 +220,10 @@ MachineInfo::supportsOperation(
     return opNames.find(operation.upper()) != opNames.end();
 }
 
-//put doxygen here
-std::set<std::pair<const TTAMachine::RegisterFile*, int> > 
-MachineInfo::getAllGuardRegisters( const TTAMachine::Machine& mach) {
-    std::set<std::pair<const TTAMachine::RegisterFile*,int> > allGuardRegs;
+// put doxygen here
+std::set<std::pair<const TTAMachine::RegisterFile*, int> >
+MachineInfo::getAllGuardRegisters(const TTAMachine::Machine& mach) {
+    std::set<std::pair<const TTAMachine::RegisterFile*, int> > allGuardRegs;
     const Machine::BusNavigator& busNav = mach.busNavigator();
 
     // first just collect all guard registers.
@@ -231,12 +231,10 @@ MachineInfo::getAllGuardRegisters( const TTAMachine::Machine& mach) {
         Bus* bus = busNav.item(bi);
         for (int gi = 0; gi < bus->guardCount(); gi++) {
             Guard* guard = bus->guard(gi);
-            TTAMachine::RegisterGuard* rg =
-                dynamic_cast<RegisterGuard*>(guard);
+            TTAMachine::RegisterGuard* rg = dynamic_cast<RegisterGuard*>(guard);
             if (rg != NULL) {
-                allGuardRegs.insert(
-                    std::pair<RegisterFile*,int>(rg->registerFile(),
-                                                 rg->registerIndex()));
+                allGuardRegs.insert(std::pair<RegisterFile*, int>(
+                    rg->registerFile(), rg->registerIndex()));
             }
         }
     }
@@ -244,12 +242,12 @@ MachineInfo::getAllGuardRegisters( const TTAMachine::Machine& mach) {
     return allGuardRegs;
 }
 
-//put doxygen here
-//iterate over all function units and put them in a set
-//or should we put them in a list and apply some kind of prioritization?
-std::set<const TTAMachine::FunctionUnit*> 
-MachineInfo::getFUsFromOperation( const TTAMachine::Machine& mach,
-    const Operation& op) {
+// put doxygen here
+// iterate over all function units and put them in a set
+// or should we put them in a list and apply some kind of prioritization?
+std::set<const TTAMachine::FunctionUnit*>
+MachineInfo::getFUsFromOperation(
+    const TTAMachine::Machine& mach, const Operation& op) {
     const TTAMachine::Machine::FunctionUnitNavigator fuNav =
         mach.functionUnitNavigator();
 
@@ -258,11 +256,11 @@ MachineInfo::getFUsFromOperation( const TTAMachine::Machine& mach,
         const TTAMachine::FunctionUnit* fu = fuNav.item(i);
         for (int o = 0; o < fu->operationCount(); o++) {
             const TCEString fuOpName = fu->operation(o)->name();
-	    const TCEString inputOpName = op.name();
-	    if(fuOpName.lower() == inputOpName.lower()) {
-		fuSet.insert(fu);
-		break;
-	    }
+            const TCEString inputOpName = op.name();
+            if (fuOpName.lower() == inputOpName.lower()) {
+                fuSet.insert(fu);
+                break;
+            }
         }
     }
 

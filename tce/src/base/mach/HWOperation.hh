@@ -54,8 +54,8 @@ public:
     HWOperation(const std::string& name, FunctionUnit& parent);
     HWOperation(const ObjectState* state, FunctionUnit& parent);
     ~HWOperation();
-    //WHY does name return a std::string?? and not TCEString?
-    //todo just refactor
+    // WHY does name return a std::string?? and not TCEString?
+    // todo just refactor
     const std::string& name() const;
     virtual void setName(const std::string& name);
 

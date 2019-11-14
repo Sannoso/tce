@@ -31,36 +31,37 @@
  * @note rating: red
  */
 
-#include <fstream>
-#include <algorithm>
-
 #include "TDGen.hh"
-#include "Machine.hh"
+
+#include <algorithm>
+#include <fstream>
+
 #include "ADFSerializer.hh"
-#include "ControlUnit.hh"
-#include "Operation.hh"
-#include "HWOperation.hh"
-#include "FUPort.hh"
-#include "Conversion.hh"
-#include "MachineInfo.hh"
-#include "MachineConnectivityCheck.hh"
+#include "Application.hh"
+#include "BaseFUPort.hh"
 #include "Bus.hh"
-#include "Guard.hh"
-#include "StringTools.hh"
-#include "OperationPool.hh"
-#include "OperationNode.hh"
-#include "TerminalNode.hh"
 #include "ConstantNode.hh"
+#include "ControlUnit.hh"
+#include "Conversion.hh"
+#include "FUPort.hh"
+#include "Guard.hh"
+#include "HWOperation.hh"
+#include "LLVMBackend.hh"  // llvmRequiredOps..
+#include "Machine.hh"
+#include "MachineConnectivityCheck.hh"
+#include "MachineInfo.hh"
+#include "MathTools.hh"
+#include "Operand.hh"
+#include "Operation.hh"
 #include "OperationDAG.hh"
 #include "OperationDAGEdge.hh"
 #include "OperationDAGSelector.hh"
+#include "OperationNode.hh"
+#include "OperationPool.hh"
+#include "StringTools.hh"
 #include "TCEString.hh"
-#include "Operand.hh"
-#include "Application.hh"
-#include "LLVMBackend.hh" // llvmRequiredOps..
-#include "MathTools.hh"
+#include "TerminalNode.hh"
 #include "tce_config.h"
-#include "BaseFUPort.hh"
 // SP, RES, KLUDGE, 2 GPRs?
 unsigned const TDGen::REQUIRED_I32_REGS = 5;
 
@@ -1931,7 +1932,8 @@ TDGen::writeOperationDef(
     // predicate and the immediate transfer capability. Disable
     // generating the predicated versions for immediate operand
     // patterns for now.
-    bool predicatesPossible = canBePredicated(op, operandTypes);//operandTypes.find('i') == std::string::npos;
+    bool predicatesPossible = canBePredicated(
+        op, operandTypes);  // operandTypes.find('i') == std::string::npos;
 
     if (predicatesPossible) {
         // write predicated versions
@@ -3810,107 +3812,119 @@ void TDGen::createSelectPatterns(std::ostream& os) {
     }
 }
 
-//add doxygen info here
+// add doxygen info here
 bool
 TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
-	//BUS navigators, RF navigators and Imm navigators in Machine class
-//find all function units that have this operation?
-    std::set<const TTAMachine::FunctionUnit*> fuSet = 
-	MachineInfo::getFUsFromOperation(mach_, op);
-    if(fuSet.size() == 0) {
-	return false;
-	//or should we put an assert here?
+    // BUS navigators, RF navigators and Imm navigators in Machine class
+    // find all function units that have this operation?
+    std::set<const TTAMachine::FunctionUnit*> fuSet =
+        MachineInfo::getFUsFromOperation(mach_, op);
+    if (fuSet.size() == 0) {
+        return false;
+        // or should we put an assert here?
     }
 
-    std::set<std::pair<const TTAMachine::RegisterFile*, int> > allGuards = 
-	MachineInfo::getAllGuardRegisters(mach_);
+    std::set<std::pair<const TTAMachine::RegisterFile*, int> > allGuards =
+        MachineInfo::getAllGuardRegisters(mach_);
 
-    for(auto fu : fuSet) {
-	for(int i = 1; i < op.operandCount(); i++) {
-	    Operand operand = op.operand(i);
-	    //Heikki is this the correct way of iterating over operands?
-	    if(operand.isInput()) {
-		//maybe write a function for this operand = immediate thing
-		//because this is duplicated code
-		char operandType = //copied this line from somewhere but have some doubt about it.
-		    operandTypes[operand.index()-1 + op.numberOfOutputs()];
-		bool imm =  (operandType == 'i' || operandType == 'j');
-		if(imm) { //2 chances. 
-			//1) connected with guarded bus with 32bits short imm
-		    	//2) connected with 32bits imm unit over a guarded bus.
+    for (auto fu : fuSet) {
+        for (int i = 1; i < op.operandCount(); i++) {
+            Operand operand = op.operand(i);
+            // Heikki is this the correct way of iterating over operands?
+            if (operand.isInput()) {
+                // maybe write a function for this operand = immediate thing
+                // because this is duplicated code
+                char operandType =  // copied this line from somewhere but have
+                                    // some doubt about it.
+                    operandTypes[operand.index() - 1 + op.numberOfOutputs()];
+                bool imm = (operandType == 'i' || operandType == 'j');
+                if (imm) {  
+		    const TTAMachine::Machine::BusNavigator busNav 
+			mach_.busNavigator();
+		    
+		    
+		    // 2 chances.
+                    // 1) connected with guarded bus with 32bits short imm
+                    // 2) connected with 32bits imm unit over a guarded bus.
 
-		    //get BusNavigor
-		    //loop over busses
-		    //  if bus is connected to this operandPort
-		    //    && bus has guards
-		    //    && bus has 32bit width imm
-		    //          
-		    //    operand is good.
-		    //    break; //from busnavigator loop
-		    //  else //nothing, just iterate over next bus.
-		    //if(!operandIsGood) { //also chance it has connection to IMM unit
-		    //  get immediateunitnavigator
-		    //  loop over immunits
-		    //    if(isConnected(immUnit, operandPort, allGuards)) {
-		    //      operand is good;
-		    //      break; //from immnavigator loop
-		    //    }
-		    //}
-		    //if(!operand is good) {
-		    //  FU no good;
-		    //  break; //from operand loop and check next FU
-		    //}
+                    // get BusNavigor
+                    // loop over busses
+                    //  if bus is connected to this operandPort
+                    //    && bus has guards
+                    //    && bus has 32bit width imm
+                    //
+                    //    operand is good.
+                    //    break; //from busnavigator loop
+                    //  else //nothing, just iterate over next bus.
+                    // if(!operandIsGood) { //also chance it has connection to
+                    // IMM unit
+                    //  get immediateunitnavigator
+                    //  loop over immunits
+                    //    if(isConnected(immUnit, operandPort, allGuards)) {
+                    //      operand is good;
+                    //      break; //from immnavigator loop
+                    //    }
+                    //}
+                    // if(!operand is good) {
+                    //  FU no good;
+                    //  break; //from operand loop and check next FU
+                    //}
 
-		    //original pseudocode
-		    //check for guarded bus with full-width(32b)short imm connected to this port
-		    //OR guarded connection FROM an IMM unit to the port
-		    //if not
-		    //  FU no good;
-		} else {
-		    //get registerFileNavigator
-		    //loop over all RFs:
-		    //  if(isConnectedWithGuards(RF, operandPort, allGuars)) {
-		    //    operand is good.
-		    //    break;
-		    //  }
-		    //if(!operandIsGood) {
-		    //  FU no good;
-		    //  break; //from operand loop
-		    //}
-		    //
-		    // sander REMINDER check WIDTHs of buses and ports and operands and all. how does this work?
-		}
+                    // original pseudocode
+                    // check for guarded bus with full-width(32b)short imm
+                    // connected to this port OR guarded connection FROM an IMM
+                    // unit to the port if not
+                    //  FU no good;
+                } else {
+                    // get registerFileNavigator
+                    // loop over all RFs:
+                    //  if(isConnectedWithGuards(RF, operandPort, allGuars)) {
+                    //    operand is good.
+                    //    break;
+                    //  }
+                    // if(!operandIsGood) {
+                    //  FU no good;
+                    //  break; //from operand loop
+                    //}
+                    //
+                    // sander REMINDER check WIDTHs of buses and ports and
+                    // operands and all. how does this work?
+                }
 
-
-		    //original pseudocode
-		    //if operand = imm
-		    //  check for guarded bus with full-width(32b)short imm connected to this port
-		    //  OR guarded connection FROM an IMM unit to the port
-		    //else (operand!=imm)
-		    //  check connection from any registerfile with same or more width and with guards
-		    //    if not break;
-	    } else { //operand is output
-		//get registerFileNavigator.
-		//loop over all RFs
-		//  if(isConnectedWithGuards(operand.port, RF,allGuards)) {
-		//    operand is good.
-		//    break;
-		//  }
-		//if(!operandIsGood) {
-		//  FU no good;
-		//  break; //break out of operandloop and try next FU
-		//} //else do nothing and iterate over next operand.
-		//
-		//
-		//highlevel pseudocode
-		//check connection to any registerfile with same or more width and with guards
-		//  if not break;
-		//  sander REMINDER. check WIDTHs op buses and ports and operands and all. how does this work.
-	    }
-	}
-	//if(FUgood) { //we found an FU that can perform predicated operation for us.
-	//  return true; //true can be predicated
-	//} //else do nothing and iterate over next FU
+                // original pseudocode
+                // if operand = imm
+                //  check for guarded bus with full-width(32b)short imm
+                //  connected to this port OR guarded connection FROM an IMM
+                //  unit to the port
+                // else (operand!=imm)
+                //  check connection from any registerfile with same or more
+                //  width and with guards
+                //    if not break;
+            } else {  // operand is output
+                // get registerFileNavigator.
+                // loop over all RFs
+                //  if(isConnectedWithGuards(operand.port, RF,allGuards)) {
+                //    operand is good.
+                //    break;
+                //  }
+                // if(!operandIsGood) {
+                //  FU no good;
+                //  break; //break out of operandloop and try next FU
+                //} //else do nothing and iterate over next operand.
+                //
+                //
+                // highlevel pseudocode
+                // check connection to any registerfile with same or more width
+                // and with guards
+                //  if not break;
+                //  sander REMINDER. check WIDTHs op buses and ports and
+                //  operands and all. how does this work.
+            }
+        }
+        // if(FUgood) { //we found an FU that can perform predicated operation
+        // for us.
+        //  return true; //true can be predicated
+        //} //else do nothing and iterate over next FU
     }
 }
 
@@ -3928,18 +3942,19 @@ void TDGen::writeCallSeqStart(std::ostream& os) {
      << "\"# ADJCALLSTACKDOWN $amt\","
      << "[(callseq_start timm:$amt)]>;}" << std::endl << std::endl;
 
-#else 
-  os << "def SDT_TCECallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32>,"
-     << "SDTCisVT<1, i32> ]>;" << std::endl << std::endl
-     << "def callseq_start : SDNode<\"ISD::CALLSEQ_START\", "
-     << "SDT_TCECallSeqStart, [SDNPHasChain, SDNPOutGlue]>;" << std::endl
-     << std::endl
-     << "let Defs = [SP], Uses = [SP] in {" << std::endl
-     << "def ADJCALLSTACKDOWN : Pseudo<(outs),"
-     << "(ins i32imm:$amt1, i32imm:$amt2),"
-     << "\"# ADJCALLSTACKDOWN $amt1, $amt2\","
-     << "[(callseq_start timm:$amt1, timm:$amt2)]>;}"
-     << std::endl << std::endl;
+#else
+    os << "def SDT_TCECallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32>,"
+       << "SDTCisVT<1, i32> ]>;" << std::endl
+       << std::endl
+       << "def callseq_start : SDNode<\"ISD::CALLSEQ_START\", "
+       << "SDT_TCECallSeqStart, [SDNPHasChain, SDNPOutGlue]>;" << std::endl
+       << std::endl
+       << "let Defs = [SP], Uses = [SP] in {" << std::endl
+       << "def ADJCALLSTACKDOWN : Pseudo<(outs),"
+       << "(ins i32imm:$amt1, i32imm:$amt2),"
+       << "\"# ADJCALLSTACKDOWN $amt1, $amt2\","
+       << "[(callseq_start timm:$amt1, timm:$amt2)]>;}" << std::endl
+       << std::endl;
 
 #endif
 }
