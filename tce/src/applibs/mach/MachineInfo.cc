@@ -163,6 +163,19 @@ MachineInfo::operandFromPort(
     return op.operand(opndIndex);
 }
 
+//doxygen here
+/*
+const TTAMachine::FUPort&
+MachineInfo::portFromOperand(
+	const Operand& op,
+	const TTAMachine::FunctionUnit& fu) {
+    //get operand index.
+    int operandIndex = 
+//    const TTAMachine::HWOperation* hwOperation = fu->operation(operandIndex);
+//    const TTAMachine::FUPort* port = hwOperation->port(i);
+//    return ;
+}*/
+
 /**
  * Checks if slot is used in any of the instruction templates defined in ADF.
  *

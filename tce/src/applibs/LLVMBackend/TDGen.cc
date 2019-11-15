@@ -3839,9 +3839,21 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
                     operandTypes[operand.index() - 1 + op.numberOfOutputs()];
                 bool imm = (operandType == 'i' || operandType == 'j');
                 if (imm) {  
-		    const TTAMachine::Machine::BusNavigator busNav 
+		    const TTAMachine::Machine::BusNavigator busNav = 
 			mach_.busNavigator();
-		    
+		    for(int j = 0; j < busNav.count(); j++) {
+			const TTAMachine::Bus* bus = busNav.item(j);
+			//get port of this operand. 
+			//Heikki says: getHw operation from FU, then
+			//get port from the hwOperation by using the operand.
+//			const TTAMachine::FUPort& port = MachineInfo::portFromOperand(operand, *fu);
+			const TTAMachine::HWOperation* hwOperation = fu->operation(i);
+			const TTAMachine::FUPort* operandPort = hwOperation->port(i);
+			if(MachineConnectivityCheck::busConnectedToPort(*bus, *operandPort)) {
+//			&& bushasGuards 
+//			&& bus has 32bit width imm) {
+			}
+		    }
 		    
 		    // 2 chances.
                     // 1) connected with guarded bus with 32bits short imm
@@ -3876,6 +3888,14 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
                     // unit to the port if not
                     //  FU no good;
                 } else {
+		    const TTAMachine::Machine::RegisterFileNavigator rfNav =
+			    mach_.registerFileNavigator();
+		    for(int i = 0; i< rfNav.count(); i++) {
+			const TTAMachine::RegisterFile& rf = *rfNav.item(i);
+//			bool port = MachineInfo::portFromOperand(operand, *fu);
+//			if(isConnectedWithGuards(RF, port, guards)) {
+//			}
+		    }
                     // get registerFileNavigator
                     // loop over all RFs:
                     //  if(isConnectedWithGuards(RF, operandPort, allGuars)) {

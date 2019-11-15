@@ -67,6 +67,10 @@ public:
     static Operand& operandFromPort(
         const TTAMachine::HWOperation& hwOp,
         const TTAMachine::FUPort& port);
+    static const TTAMachine::FUPort portFromOperand (
+//    static bool portFromOperand(
+	const Operand& op,
+	const TTAMachine::FunctionUnit& fu);
     static bool templatesUsesSlot(
         const TTAMachine::Machine& mach,
         const std::string& slotName);
