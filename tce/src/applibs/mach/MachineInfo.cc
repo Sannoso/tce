@@ -254,6 +254,23 @@ MachineInfo::getAllGuardRegisters(const TTAMachine::Machine& mach) {
 
     return allGuardRegs;
 }
+/*
+//put doxygen here
+std::set<const TTAMachine::Guard*>
+MachineInfo::getAllGuards(const TTAMachine::Machine& mach) {
+    std::set<const Guard*> allGuards;
+    const Machine::BusNavigator& busNav = mach.busNavigator();
+
+    for (int bi = 0; bi < busNav.count(); ++bi) {
+        Bus* bus = busNav.item(bi);
+        for (int gi = 0; gi < bus->guardCount(); gi++) {
+            Guard* guard = bus->guard(gi);
+	    allGuards.insert(guard);
+        }
+    }
+    return allGuards;
+}
+*/
 
 // put doxygen here
 // iterate over all function units and put them in a set

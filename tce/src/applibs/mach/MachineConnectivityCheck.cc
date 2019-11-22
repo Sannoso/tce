@@ -1510,3 +1510,19 @@ MachineConnectivityCheck::hasBothGuards(
     }
     return std::pair<bool, bool>(trueOK, falseOK);
 }
+
+//put doxygen here
+bool
+MachineConnectivityCheck::hasAllGuards(
+    const TTAMachine::Bus* bus, std::set<std::pair<const RegisterFile*, int> > guardRegs) {
+
+    bool hasAllGuards = true;
+    for (auto guardPair : guardRegs) {
+	if(hasBothGuards(bus, guardPair) != std::pair<bool,bool>(true, true)) {
+	    hasAllGuards = false;
+	    break;
+	}
+    }
+    return hasAllGuards;
+}
+

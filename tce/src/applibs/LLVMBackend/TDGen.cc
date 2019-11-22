@@ -3826,9 +3826,12 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
 
     std::set<std::pair<const TTAMachine::RegisterFile*, int> > allGuards =
         MachineInfo::getAllGuardRegisters(mach_);
-
+//    std::set<const TTAMachine::Guard*> allGuards = MachineInfo::getAllGuards(mach_);
+    bool goodFUExists = true;
     for (auto fu : fuSet) {
+	bool allOperandsAreGood = true;
         for (int i = 1; i < op.operandCount(); i++) {
+	    bool operandIsGood = false; //assume false, then if it passes all tests it is correct
             Operand operand = op.operand(i);
             // Heikki is this the correct way of iterating over operands?
             if (operand.isInput()) {
@@ -3838,7 +3841,9 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
                                     // some doubt about it.
                     operandTypes[operand.index() - 1 + op.numberOfOutputs()];
                 bool imm = (operandType == 'i' || operandType == 'j');
-                if (imm) {  
+                if (imm) {
+		    const TTAMachine::HWOperation* hwOperation = fu->operation(i);
+		    const TTAMachine::FUPort* operandPort = hwOperation->port(i); 
 		    const TTAMachine::Machine::BusNavigator busNav = 
 			mach_.busNavigator();
 		    for(int j = 0; j < busNav.count(); j++) {
@@ -3847,12 +3852,32 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
 			//Heikki says: getHw operation from FU, then
 			//get port from the hwOperation by using the operand.
 //			const TTAMachine::FUPort& port = MachineInfo::portFromOperand(operand, *fu);
+//			   missing some info for this new function MachineInfo::portFromOperand.
 			const TTAMachine::HWOperation* hwOperation = fu->operation(i);
 			const TTAMachine::FUPort* operandPort = hwOperation->port(i);
-			if(MachineConnectivityCheck::busConnectedToPort(*bus, *operandPort)) {
-//			&& bushasGuards 
-//			&& bus has 32bit width imm) {
+			if(MachineConnectivityCheck::busConnectedToPort(*bus, *operandPort) &&
+			   MachineConnectivityCheck::hasAllGuards(bus, allGuards)  &&
+			   bus->immediateWidth() >= 32){
+			  operandIsGood = true;
+			  break; 
 			}
+		    }
+		    if(!operandIsGood) {
+			//also chance this operand has connection to IMM unit.
+			const TTAMachine::Machine::ImmediateUnitNavigator immNav =
+				mach_.immediateUnitNavigator();
+			for(int j = 0; j < immNav.count(); j++) {
+			    const TTAMachine::ImmediateUnit* immUnit = immNav.item(j);
+			    if(MachineConnectivityCheck::isConnectedWithGuards(*immUnit, *operandPort, allGuards)) {
+				operandIsGood = true;
+				break;
+			    }
+			}
+		    }
+		    if(!operandIsGood) {
+			//this FU is no good. break and look into next FU.
+			allOperandsAreGood = false;
+			break;
 		    }
 		    
 		    // 2 chances.
@@ -3887,18 +3912,25 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
                     // connected to this port OR guarded connection FROM an IMM
                     // unit to the port if not
                     //  FU no good;
-                } else {
+
+                } else { //so inputport that is no IMM
 		    const TTAMachine::Machine::RegisterFileNavigator rfNav =
 			    mach_.registerFileNavigator();
-		    for(int i = 0; i< rfNav.count(); i++) {
-			const TTAMachine::RegisterFile& rf = *rfNav.item(i);
-//			bool port = MachineInfo::portFromOperand(operand, *fu);
-//			if(isConnectedWithGuards(RF, port, guards)) {
-//			}
+		    for(int j = 0; j< rfNav.count(); j++) {
+			const TTAMachine::RegisterFile& rf = *rfNav.item(j);
+			const TTAMachine::HWOperation* hwOperation = fu->operation(i);
+		    	const TTAMachine::FUPort* operandPort = hwOperation->port(i);
+			if(MachineConnectivityCheck::isConnectedWithGuards(rf, operandPort, allGuards)) {
+			    operandIsGood = false;
+			    break;
+			}
+		    }
+		    if(!operandIsGood) {
+			allOperandsAreGood = false;
 		    }
                     // get registerFileNavigator
                     // loop over all RFs:
-                    //  if(isConnectedWithGuards(RF, operandPort, allGuars)) {
+                    //  if(isConnectedWithGuards(RF, operandPort, allGuards)) {
                     //    operand is good.
                     //    break;
                     //  }
@@ -3941,11 +3973,12 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
                 //  operands and all. how does this work.
             }
         }
-        // if(FUgood) { //we found an FU that can perform predicated operation
-        // for us.
-        //  return true; //true can be predicated
-        //} //else do nothing and iterate over next FU
+	if(allOperandsAreGood) {
+	    goodFUExists = true;
+	    break;
+	}
     }
+    return goodFUExists;
 }
 
 void TDGen::writeCallSeqStart(std::ostream& os) {

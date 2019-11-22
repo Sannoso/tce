@@ -213,6 +213,10 @@ public:
         const TTAMachine::Bus* bus,
         std::pair<const TTAMachine::RegisterFile*, int> guardReg);
 
+    static bool hasAllGuards(
+	const TTAMachine::Bus* bus,
+	std::set<std::pair<const TTAMachine::RegisterFile*, int> > guardReg);
+
 protected:
     MachineConnectivityCheck(const std::string& shortDesc_);
 private:

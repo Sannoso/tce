@@ -45,6 +45,7 @@ namespace TTAMachine {
     class HWOperation;
     class FUPort;
     class FunctionUnit;
+    class Guard;
 }
 
 class Operand;
@@ -58,6 +59,8 @@ public:
         const TTAMachine::Machine& mach, const TCEString operation);
     static std::set<std::pair<const TTAMachine::RegisterFile*, int> >
     getAllGuardRegisters(const TTAMachine::Machine& mach);
+//    static std::set<const TTAMachine::Guard*> getAllGuards(
+//	const TTAMachine::Machine& mach);
     static std::set<const TTAMachine::FunctionUnit*> getFUsFromOperation(
         const TTAMachine::Machine& mach, const Operation& op);
     static TTAMachine::AddressSpace* defaultDataAddressSpace(
