@@ -153,6 +153,48 @@ MachineConnectivityCheck::isConnected(
     }
 }
 
+//sander put doxygen here
+bool
+MachineConnectivityCheck::isConnectedWithBothGuards(
+    const TTAMachine::Port& sourcePort,
+    const TTAMachine::Port& destinationPort,
+    std::pair<const TTAMachine::RegisterFile*, int> guardReg) {
+
+    std::set<TTAMachine::Bus*> sourceBuses;
+    if(sourcePort.isOutput()) {
+	appendConnectedDestinationBuses(sourcePort, sourceBuses);
+    } else {
+	appendConnectedSourceBuses(sourcePort, sourceBuses);
+    }
+    //Heikki, is sourcePort always output? So the else clause can be deleted?
+
+    std::set<TTAMachine::Bus*> destinationBuses;
+    if(destinationPort.isInput()) {
+	appendConnectedSourceBuses(destinationPort, destinationBuses);
+    } else {
+	appendConnectedDestinationBuses(destinationPort, destinationBuses);
+    }
+    //Heikki, is destport always input? So the else clause can be deleted?
+
+    std::set<TTAMachine::Bus*> sharedBuses;
+    SetTools::intersection(sourceBuses, destinationBuses, sharedBuses);
+    if(sharedBuses.size() > 0) {
+	for (std::set<TTAMachine::Bus*>::iterator i = sharedBuses.begin();
+            i != sharedBuses.end(); i++) {
+	    
+	    Bus* bus = *i;
+	    std::pair<bool, bool> guardsOK = hasBothGuards(bus, guardReg);
+            bool trueOK = guardsOK.first;
+            bool falseOK = guardsOK.second;
+            if (trueOK && falseOK) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 /**
  * Checks whether an immediate with given width can be transported to the
  * destination register file.
@@ -1378,12 +1420,32 @@ MachineConnectivityCheck::hasConditionalOperations(
 }
 */
 
+// put doxygen here
+bool
+MachineConnectivityCheck::isConnectedWithGuards(
+    const TTAMachine::Port& sourcePort,
+    const TTAMachine::Port& destPort,
+    std::set<std::pair<const TTAMachine::RegisterFile*, int> > guardRegs) {
+//this now only is a loop over the set and call isConnectedWithBothGuards
+    bool connectedWithAllGuards = true;
+
+    for(auto guard : guardRegs) {
+	if(!isConnectedWithBothGuards(sourcePort,destPort, guard)) {
+	    connectedWithAllGuards = false;
+	    break;
+	}
+    }
+    
+    return connectedWithAllGuards;
+}
+
 // doxygen here
 bool
 MachineConnectivityCheck::isConnectedWithGuards(
     const TTAMachine::BaseRegisterFile& sourceRF,
-    const TTAMachine::Port& destport,
+    const TTAMachine::Port& destPort,
     std::set<std::pair<const TTAMachine::RegisterFile*, int> > guardRegs) {
+
     // question. only one outputport of the RF need to be connected to the
     // destport with all guards, right?
     //
@@ -1404,7 +1466,23 @@ MachineConnectivityCheck::isConnectedWithGuards(
     //  }
     //}
     // return connection;
-    return false;
+    
+    //Heikki, I assume only one outputport of the RF need to be connected
+    //to the destport with all guards.
+    bool connection = false; 
+
+    //looking for a port iterator:
+    //didn't find one, just going over index
+    for (int i = 0; i < sourceRF.portCount(); i++) {
+	const TTAMachine::Port* rfPort = sourceRF.port(i);
+	if(rfPort->isOutput()) {
+	    if(isConnectedWithGuards(*rfPort, destPort, guardRegs)) {
+		connection = true;
+		break;
+	    }
+	}
+    }
+    return connection;
 }
 
 // doxygen here
@@ -1432,7 +1510,18 @@ MachineConnectivityCheck::isConnectedWithGuards(
     //  }
     //}
     // return connection;
-    return false;
+    
+    bool connection = false;
+    for(int i = 0; i < destRF.portCount(); i++) {
+	const TTAMachine::Port* rfPort = destRF.port(i);
+	if(rfPort->isInput()) {
+	    if(isConnectedWithGuards(sourcePort, *rfPort, guardRegs)) {
+		connection = true;
+		break;
+	    }
+	}
+    }
+    return connection;
 }
 
 /**

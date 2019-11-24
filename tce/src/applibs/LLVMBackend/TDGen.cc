@@ -3815,7 +3815,6 @@ void TDGen::createSelectPatterns(std::ostream& os) {
 // add doxygen info here
 bool
 TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
-    // BUS navigators, RF navigators and Imm navigators in Machine class
     // find all function units that have this operation?
     std::set<const TTAMachine::FunctionUnit*> fuSet =
         MachineInfo::getFUsFromOperation(mach_, op);
@@ -3826,7 +3825,6 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
 
     std::set<std::pair<const TTAMachine::RegisterFile*, int> > allGuards =
         MachineInfo::getAllGuardRegisters(mach_);
-//    std::set<const TTAMachine::Guard*> allGuards = MachineInfo::getAllGuards(mach_);
     bool goodFUExists = true;
     for (auto fu : fuSet) {
 	bool allOperandsAreGood = true;
@@ -3917,10 +3915,10 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
 		    const TTAMachine::Machine::RegisterFileNavigator rfNav =
 			    mach_.registerFileNavigator();
 		    for(int j = 0; j< rfNav.count(); j++) {
-			const TTAMachine::RegisterFile& rf = *rfNav.item(j);
+			const TTAMachine::RegisterFile* rf = rfNav.item(j);
 			const TTAMachine::HWOperation* hwOperation = fu->operation(i);
 		    	const TTAMachine::FUPort* operandPort = hwOperation->port(i);
-			if(MachineConnectivityCheck::isConnectedWithGuards(rf, operandPort, allGuards)) {
+			if(MachineConnectivityCheck::isConnectedWithGuards(*rf, *operandPort, allGuards)) {
 			    operandIsGood = false;
 			    break;
 			}
@@ -3953,6 +3951,23 @@ TDGen::canBePredicated(Operation& op, const std::string& operandTypes) {
                 //  width and with guards
                 //    if not break;
             } else {  // operand is output
+		const TTAMachine::Machine::RegisterFileNavigator rfNav = 
+		    mach_.registerFileNavigator();
+
+		for(int j = 0; j <rfNav.count(); j++) {
+		    const TTAMachine::RegisterFile* rf = rfNav.item(j);
+		    const TTAMachine::HWOperation* hwOperation = fu->operation(i);
+		    const TTAMachine::FUPort* operandPort = hwOperation->port(i);
+		    if(MachineConnectivityCheck::isConnectedWithGuards(*operandPort, *rf, allGuards)) {
+			operandIsGood = true;
+			break;
+		    }
+		}
+		if(!operandIsGood) {
+		    allOperandsAreGood = false;
+		}
+
+
                 // get registerFileNavigator.
                 // loop over all RFs
                 //  if(isConnectedWithGuards(operand.port, RF,allGuards)) {
