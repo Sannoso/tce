@@ -83,6 +83,7 @@ public:
     virtual bool isConnectedTo(const Socket& socket) const;
 
     bool hasGuard(Guard& guard) const;
+//    bool hasGuards(std::set<Guard& guard>) const;
     void addGuard(Guard& guard);
     virtual void removeGuard(Guard& guard);
     int guardCount() const;
